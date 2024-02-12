@@ -19,4 +19,5 @@ async function createApiRequest(searchQuery, page) {
   const response = await axios(options);
   return response.data;
 }
+
 export default createApiRequest;
