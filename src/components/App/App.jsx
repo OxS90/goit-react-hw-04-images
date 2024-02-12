@@ -12,7 +12,6 @@ const App = () => {
   const [imagesList, setImagesList] = useState([]);
   const [loading, setLoading] = useState(false);
   const [areImages, setAreImages] = useState(false);
-  const [_error, setError] = useState(null);
 
   useEffect(() => {
     fetchImages();
@@ -30,7 +29,7 @@ const App = () => {
       setImagesList(imagesList => [...imagesList, ...newImages]);
       setAreImages(images.totalHits > imagesList.length);
     } catch (error) {
-      setError(error);
+      console.log('Error:', error);
     } finally {
       window.scrollTo({
         top: document.documentElement.scrollHeight,
