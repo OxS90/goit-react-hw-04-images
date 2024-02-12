@@ -1,4 +1,4 @@
-import { Component } from 'react';
+import { useState, useEffect } from 'react';
 import SearchBar from '../SearchBar/SearchBar';
 import createApiRequest from '../ApiRequest';
 import ImageGallery from '../ImageGallery/ImageGallery';
@@ -6,86 +6,70 @@ import styles from './App.module.css';
 import Button from '../Button/Button';
 import Loader from '../Loader';
 
-class App extends Component {
-  state = {
-    query: '',
-    page: 1,
-    imagesList: [],
-    loading: false,
-    areImages: false,
-    error: null,
-  };
+const App = () => {
+  const [query, setQuery] = useState('');
+  const [page, setPage] = useState(0);
+  const [imagesList, setImagesList] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [areImages, setAreImages] = useState(false);
+  const [_error, setError] = useState(null);
 
-  componentDidUpdate(_prevProps, prevState) {
-    if (
-      prevState.query !== this.state.query ||
-      prevState.page !== this.state.page
-    ) {
-      this.fetchImages();
-    }
-  }
+  useEffect(() => {
+    fetchImages();
+  }, [query, page]);
 
-  async fetchImages() {
-    this.setState({ loading: true });
+  async function fetchImages() {
+    setLoading(true);
     try {
-      const images = await createApiRequest(this.state.query, this.state.page);
+      const images = await createApiRequest(query, page);
       const newImages = images.hits.map(image => ({
         id: image.id,
         webformatURL: image.webformatURL,
         largeImageURL: image.largeImageURL,
       }));
-      this.setState(prevState => ({
-        imagesList: [...prevState.imagesList, ...newImages],
-        areImages: images.totalHits > prevState.imagesList.length,
-      }));
-      this.setState({ loading: false });
+      setImagesList(imagesList => [...imagesList, ...newImages]);
+      setAreImages(images.totalHits > imagesList.length);
     } catch (error) {
-      this.setState({ error });
+      setError(error);
     } finally {
       window.scrollTo({
         top: document.documentElement.scrollHeight,
         behavior: 'smooth',
       });
+      setLoading(false);
     }
   }
 
-  handleClick = () => {
-    this.setState(prevState => ({
-      page: prevState.page + 1,
-    }));
+  const handleClick = () => {
+    setPage(page => page + 1);
   };
 
-  handleSubmit = event => {
+  const handleSubmit = event => {
     event.preventDefault();
-    this.setState({ query: event.target[1].value, page: 1, imagesList: [] });
+    setQuery(event.target[1].value);
+    setPage(1);
+    setImagesList([]);
     document.querySelector('input').value = '';
   };
 
-  render() {
-    const { loading, imagesList, areImages, page } = this.state;
-
-    return (
-      <div className={styles.app}>
-        <SearchBar onSubmit={this.handleSubmit} />
-        {loading && <Loader />}
-        <ImageGallery imagesGallery={imagesList} />
-        {areImages && <Button onClickFunction={this.handleClick} />}
-        {!areImages &&
-          page === 1 &&
-          this.state.query &&
-          this.state.imagesList.length === 0 && (
-            <p>
-              <br /> Your search did not match any images.
-            </p>
-          )}
-        {!areImages && page > 1 && (
-          <p>
-            <br /> You have reached the end of the search results.
-          </p>
-        )}
-      </div>
-    );
-  }
-}
+  return (
+    <div className={styles.app}>
+      <SearchBar onSubmit={handleSubmit} />
+      {loading && <Loader />}
+      <ImageGallery imagesGallery={imagesList} />
+      {areImages && <Button onClickFunction={handleClick} />}
+      {!areImages && page === 1 && query && imagesList.length === 0 && (
+        <p>
+          <br /> Your search did not match any images.
+        </p>
+      )}
+      {!areImages && page > 1 && (
+        <p>
+          <br /> You have reached the end of the search results.
+        </p>
+      )}
+    </div>
+  );
+};
 
 export default App;
